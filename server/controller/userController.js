@@ -6,7 +6,6 @@ import { BadRequestError, NotFoundError } from '../errors/index.js'
 import Notification from '../model/Notification.js'
 
 export const getUserProfile = async (req, res) => {
-  // get the username from the params
   const { username } = req.params
 
   // find the user in the database
@@ -28,7 +27,6 @@ export const getUserProfile = async (req, res) => {
     -> in this example we place the name in the array -> but in the real world, we place the id here
 */
 export const followUnfollowUser = async (req, res) => {
-  // get following user from request params object
   const { id } = req.params
 
   // get followingUser and currentUser
@@ -71,7 +69,6 @@ export const followUnfollowUser = async (req, res) => {
 }
 
 export const getSuggestedUsers = async (req, res) => {
-  // get current user
   const userId = req.user._id
 
   // get following users
@@ -149,7 +146,6 @@ export const updateUser = async (req, res) => {
         user.profileImg.split('/').pop().split('.')[0] // filename without extension
       )
     }
-
     // upload new profileImg
     const uploadedResponse = await cloudinary.uploader.upload(profileImg)
     profileImg = uploadedResponse.secure_url
@@ -163,7 +159,6 @@ export const updateUser = async (req, res) => {
         user.coverImg.split('/').pop().split('.')[0]
       )
     }
-
     // upload new coverImg
     const uploadedResponse = await cloudinary.uploader.upload(coverImg)
     coverImg = uploadedResponse.secure_url
