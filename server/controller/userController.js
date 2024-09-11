@@ -3,6 +3,7 @@ import { v2 as cloudinary } from 'cloudinary'
 import { StatusCodes } from 'http-status-codes'
 import User from '../model/User.js'
 import { BadRequestError, NotFoundError } from '../errors/index.js'
+import Notification from '../model/Notification.js'
 
 export const getUserProfile = async (req, res) => {
   // get the username from the params
@@ -56,6 +57,14 @@ export const followUnfollowUser = async (req, res) => {
     // if user is not followed, follow them
     await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } })
     await User.findByIdAndUpdate(req.user._id, { $push: { following: id } })
+
+    // Send notification to the following user
+    const newNotification = new Notification({
+      type: 'follow',
+      from: req.user._id,
+      to: followingUser._id,
+    })
+    await newNotification.save()
 
     res.status(StatusCodes.OK).json({ message: 'User followed successfully' })
   }
