@@ -9,7 +9,7 @@ export const signup = async (req, res) => {
   const { fullName, username, email, password } = req.body
 
   // write a regex to check if email is valid or not and throw an error if it is not
-  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!isEmailValid.test(email)) {
     throw BadRequestError('Invalid email format')
   }
