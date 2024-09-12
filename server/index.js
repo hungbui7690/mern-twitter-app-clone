@@ -11,6 +11,13 @@ import { connectDB } from './db/connect.js'
 import authRouter from './routes/authRoutes.js'
 import userRouter from './routes/userRoutes.js'
 import notificationRouter from './routes/notificationRoutes.js'
+import { v2 as cloudinary } from 'cloudinary'
+
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET,
+})
 
 app.use(express.json())
 app.use(cookieParser(process.env.JWT_SECRET))
