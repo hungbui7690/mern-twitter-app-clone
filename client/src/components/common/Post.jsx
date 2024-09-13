@@ -105,7 +105,7 @@ const Post = ({ post }) => {
             {post.img && (
               <img
                 src={post.img}
-                className='border-gray-700 border rounded-lg h-80 object-cover'
+                className='border-gray-700 border rounded-lg aspect-video object-cover'
                 alt=''
               />
             )}

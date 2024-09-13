@@ -1,14 +1,36 @@
 import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import RightPanelSkeleton from '../skeleton/RightPanelSkeleton'
-import { USERS_FOR_RIGHT_PANEL } from '../../utils/db/dummy'
+import { axiosInstance } from '../../utils/axios'
+import toast from 'react-hot-toast'
 
 const RightPanel = () => {
-  const isLoading = false
+  const { data: suggestedUsers, isLoading } = useQuery({
+    queryKey: ['suggestedUsers'],
+    queryFn: async () => {
+      try {
+        const res = await axiosInstance.get('/user/suggested')
+        return res.data
+      } catch (error) {
+        console.error(error.response.data.msg)
+        return error
+      }
+    },
+    retry: false,
+    onSuccess: (data) => {
+      if (data.response) {
+        toast.error(data.response.data.msg)
+        return
+      }
+    },
+  })
+
+  if (suggestedUsers?.length === 0) return <div className='w-0 md:w-64'></div>
 
   return (
-    <div className='lg:block hidden my-4 ml-3'>
-      <div className='top-7 sticky bg-[#16181C] p-4 rounded-md'>
-        <p className='mb-5 font-bold text-white text-xl'>Who to follow</p>
+    <div className='lg:block hidden mx-2 my-4'>
+      <div className='top-2 sticky bg-[#16181C] p-4 rounded-md'>
+        <p className='font-bold'>Who to follow</p>
         <div className='flex flex-col gap-4'>
           {/* item */}
           {isLoading && (
@@ -20,7 +42,7 @@ const RightPanel = () => {
             </>
           )}
           {!isLoading &&
-            USERS_FOR_RIGHT_PANEL?.map((user) => (
+            suggestedUsers?.map((user) => (
               <Link
                 to={`/profile/${user.username}`}
                 className='flex justify-between items-center gap-4'
@@ -44,7 +66,9 @@ const RightPanel = () => {
                 <div>
                   <button
                     className='bg-white hover:bg-white hover:opacity-90 rounded-full text-black btn btn-sm'
-                    onClick={(e) => e.preventDefault()}
+                    onClick={(e) => {
+                      e.preventDefault()
+                    }}
                   >
                     Follow
                   </button>
