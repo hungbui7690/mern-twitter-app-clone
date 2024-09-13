@@ -5,13 +5,14 @@ dotenv.config()
 import 'express-async-errors'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
+import { v2 as cloudinary } from 'cloudinary'
 import notFoundMiddleware from './middleware/not-found.js'
 import errorHandlerMiddleware from './middleware/error-handler.js'
 import { connectDB } from './db/connect.js'
 import authRouter from './routes/authRoutes.js'
 import userRouter from './routes/userRoutes.js'
 import notificationRouter from './routes/notificationRoutes.js'
-import { v2 as cloudinary } from 'cloudinary'
+import postRouter from './routes/postRoutes.js'
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -30,6 +31,7 @@ app.get('/', (req, res) => {
 app.use('/api/v1/auth', authRouter)
 app.use('/api/v1/user', userRouter)
 app.use('/api/v1/notification', notificationRouter)
+app.use('/api/v1/posts', postRouter)
 
 app.use(notFoundMiddleware)
 app.use(errorHandlerMiddleware)

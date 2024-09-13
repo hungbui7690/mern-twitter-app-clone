@@ -7,8 +7,10 @@ import { MdDriveFileRenameOutline } from 'react-icons/md'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { axiosInstance } from '../../utils/axios'
 import toast from 'react-hot-toast'
+import { useAuthStore } from '../../zustand/useAuthStore'
 
 const SignUpPage = () => {
+  const setIsLogin = useAuthStore((state) => state.setIsLogin)
   const queryClient = useQueryClient()
   const {
     mutate: signupMutation,
@@ -18,7 +20,7 @@ const SignUpPage = () => {
     mutationFn: async (formData) => {
       try {
         const res = await axiosInstance.post('/auth/signup', formData)
-        console.log('signup: ', res)
+        setIsLogin(true)
         return res.data
       } catch (error) {
         console.error(error.response.data.msg)

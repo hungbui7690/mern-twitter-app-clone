@@ -5,8 +5,10 @@ import { MdPassword } from 'react-icons/md'
 import { axiosInstance } from '../../utils/axios'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
+import { useAuthStore } from '../../zustand/useAuthStore'
 
-const SignUpPage = () => {
+const LoginPage = () => {
+  const setIsLogin = useAuthStore((state) => state.setIsLogin)
   const queryClient = useQueryClient()
   const {
     mutate: loginMutation,
@@ -16,7 +18,7 @@ const SignUpPage = () => {
     mutationFn: async (formData) => {
       try {
         const res = await axiosInstance.post('/auth/login', formData)
-        console.log('login: ', res)
+        setIsLogin(true)
         return res.data
       } catch (error) {
         console.error(error.response.data.msg)
@@ -95,4 +97,4 @@ const SignUpPage = () => {
   )
 }
 
-export default SignUpPage
+export default LoginPage

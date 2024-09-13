@@ -3,23 +3,23 @@ import { MdHomeFilled } from 'react-icons/md'
 import { IoNotifications } from 'react-icons/io5'
 import { FaUser } from 'react-icons/fa'
 import { BiLogOut } from 'react-icons/bi'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { axiosInstance } from '../../utils/axios'
 import toast from 'react-hot-toast'
 import LoadingSpinner from './LoadingSpinner'
+import { useAuthStore } from '../../zustand/useAuthStore'
 
 const Sidebar = () => {
-  const navigate = useNavigate()
+  const setIsLogin = useAuthStore((state) => state.setIsLogin)
   const queryClient = useQueryClient()
   const { mutate: logoutMutation, isPending } = useMutation({
     mutationFn: async () => {
       try {
         const res = await axiosInstance.post('/auth/logout')
-        console.log('sidebar: ', res)
+        setIsLogin(false)
         return res.data
       } catch (error) {
-        console.error(error.response.data.msg)
         return error
       }
     },
@@ -30,7 +30,6 @@ const Sidebar = () => {
       }
       toast.success('Logout successful')
       queryClient.invalidateQueries({ queryKey: ['authUser'] })
-      navigate('/login')
     },
   })
 
@@ -74,7 +73,7 @@ const Sidebar = () => {
           </li>
           <li className='flex justify-center md:justify-start'>
             <Link
-              to={`/post/create}`}
+              to={`/post}`}
               className='flex justify-center rounded-lg w-full'
             >
               <button className='inline-block bg-primary p-2 rounded-full w-full text-white'>

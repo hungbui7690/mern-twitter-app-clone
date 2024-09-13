@@ -10,17 +10,20 @@ import { LoadingSpinner, SharedLayout } from './components'
 import toast, { Toaster } from 'react-hot-toast'
 import { useQuery } from '@tanstack/react-query'
 import { axiosInstance } from './utils/axios'
+import { useAuthStore } from './zustand/useAuthStore'
 
 function App() {
+  const isLogin = useAuthStore((state) => state.isLogin)
   const { data: authUser, isLoading } = useQuery({
-    queryKey: ['authUser'], // we use queryKey to give a unique name to our query and refer to it later
+    queryKey: ['authUser'],
     queryFn: async () => {
       try {
         const res = await axiosInstance.get('/auth/me')
+        // console.log('authUser: ', res)
         return res.data
       } catch (error) {
-        console.log(error)
-        return null
+        if (isLogin) return error
+        else return null
       }
     },
     retry: false,
@@ -40,7 +43,7 @@ function App() {
     )
   }
 
-  console.log(authUser)
+  // console.log(authUser)
 
   return (
     <div className='flex mx-auto max-w-6xl'>

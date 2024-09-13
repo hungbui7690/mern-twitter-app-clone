@@ -85,6 +85,7 @@ const EditProfileModal = () => {
                 className='flex-1 border-gray-700 p-2 border rounded input input-md'
                 value={formData.newPassword}
                 name='newPassword'
+                autoComplete='true'
                 onChange={handleInputChange}
               />
             </div>
@@ -94,6 +95,7 @@ const EditProfileModal = () => {
               className='flex-1 border-gray-700 p-2 border rounded input input-md'
               value={formData.link}
               name='link'
+              autoComplete='true'
               onChange={handleInputChange}
             />
             <button className='rounded-full text-white btn btn-primary btn-sm'>

@@ -5,16 +5,58 @@ import { FaRegBookmark } from 'react-icons/fa6'
 import { FaTrash } from 'react-icons/fa'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'react-hot-toast'
+import LoadingSpinner from './LoadingSpinner'
+import { formatPostDate } from '../../utils/date'
+import { axiosInstance } from '../../utils/axios'
 
 const Post = ({ post }) => {
+  console.log(post)
   const [comment, setComment] = useState('')
-  const postOwner = post.user
-  const isLiked = false
-  const isMyPost = true
-  const formattedDate = '1h'
-  const isCommenting = false
+  const { data: authUser } = useQuery({ queryKey: ['authUser'] })
 
-  const handleDeletePost = () => {}
+  // The useQueryClient hook (to not be confused with the useQuery hook or QueryClient) is our entry point to interacting with our query cache. The useQueryClient hook returns the instance of the current QueryClient of our application.
+  // const {
+  //   prefetchQuery,
+  //   fetchQuery,
+  //   getQueryData,
+  //   refetchQueries,
+  //   getQueryState,
+  //   setQueryDefaults,
+  //   clear,
+  // } = useQueryClient();
+  const queryClient = useQueryClient()
+  const postOwner = post.user
+  const isLiked = post.likes.includes(authUser._id)
+  const isMyPost = authUser._id === post.user._id
+  const formattedDate = formatPostDate(post.createdAt)
+
+  const { mutate: deletePost, isPending: isDeleting } = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await axiosInstance(`/posts/${post._id}`, {
+          method: 'DELETE',
+        })
+        return res.data
+      } catch (error) {
+        console.error(error.response.data.msg)
+        return error
+      }
+    },
+    onSuccess: (data) => {
+      if (data.response) {
+        toast.error(data.response.data.msg)
+        return
+      }
+      toast.success('Post deleted successfully')
+      queryClient.invalidateQueries({ queryKey: ['posts'] })
+    },
+  })
+
+  const handleDeletePost = () => {
+    deletePost()
+  }
 
   const handlePostComment = (e) => {
     e.preventDefault()
@@ -47,10 +89,14 @@ const Post = ({ post }) => {
             </span>
             {isMyPost && (
               <span className='flex flex-1 justify-end'>
-                <FaTrash
-                  className='hover:text-red-500 cursor-pointer'
-                  onClick={handleDeletePost}
-                />
+                {!isDeleting && (
+                  <FaTrash
+                    className='hover:text-red-500 cursor-pointer'
+                    onClick={handleDeletePost}
+                  />
+                )}
+
+                {isDeleting && <LoadingSpinner size='sm' />}
               </span>
             )}
           </div>
@@ -59,7 +105,7 @@ const Post = ({ post }) => {
             {post.img && (
               <img
                 src={post.img}
-                className='border-gray-700 border rounded-lg aspect-video object-contain'
+                className='border-gray-700 border rounded-lg h-80 object-contain'
                 alt=''
               />
             )}
@@ -79,7 +125,7 @@ const Post = ({ post }) => {
                   {post.comments.length}
                 </span>
               </div>
-              {/* Modal Component from DaisyUI */}
+              {/* We're using Modal Component from DaisyUI */}
               <dialog
                 id={`comments_modal${post._id}`}
                 className='border-none modal outline-none'
@@ -129,11 +175,7 @@ const Post = ({ post }) => {
                       onChange={(e) => setComment(e.target.value)}
                     />
                     <button className='px-4 rounded-full text-white btn btn-primary btn-sm'>
-                      {isCommenting ? (
-                        <span className='loading loading-md loading-spinner'></span>
-                      ) : (
-                        'Post'
-                      )}
+                      {<LoadingSpinner size='md' />}
                     </button>
                   </form>
                 </div>
@@ -151,24 +193,18 @@ const Post = ({ post }) => {
                 className='flex items-center gap-1 cursor-pointer group'
                 onClick={handleLikePost}
               >
-                {!isLiked && (
-                  <FaRegHeart className='group-hover:text-pink-500 w-4 h-4 text-slate-500 cursor-pointer' />
-                )}
-                {isLiked && (
-                  <FaRegHeart className='w-4 h-4 text-pink-500 cursor-pointer' />
-                )}
-
+                <FaRegHeart className='group-hover:text-pink-500 w-4 h-4 text-slate-500 cursor-pointer' />
                 <span
-                  className={`text-sm text-slate-500 group-hover:text-pink-500 ${
-                    isLiked ? 'text-pink-500' : ''
+                  className={`text-sm  group-hover:text-pink-500 ${
+                    isLiked ? 'text-pink-500' : 'text-slate-500'
                   }`}
                 >
                   {post.likes.length}
                 </span>
               </div>
             </div>
-            <div className='flex justify-end items-center gap-2 w-1/3 hover:text-primary'>
-              <FaRegBookmark className='w-4 h-4 text-slate-500 hover:text-primary cursor-pointer' />
+            <div className='flex justify-end items-center gap-2 w-1/3'>
+              <FaRegBookmark className='w-4 h-4 text-slate-500 cursor-pointer' />
             </div>
           </div>
         </div>

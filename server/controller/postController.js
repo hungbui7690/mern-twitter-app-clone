@@ -39,7 +39,95 @@ export const createPost = async (req, res) => {
   await newPost.save()
 
   // return the post
-  res.status(StatusCodes.CREATE).json(newPost)
+  res.status(StatusCodes.CREATED).json(newPost)
+}
+
+export const getAllPosts = async (req, res) => {
+  const posts = await Post.find()
+    .sort({ createdAt: -1 })
+    .populate({
+      path: 'user',
+      select: '-password',
+    })
+    .populate({
+      path: 'comments.user',
+      select: '-password',
+    })
+
+  if (posts.length === 0) {
+    return res.status(200).json([])
+  }
+
+  res.status(200).json(posts)
+}
+
+export const getFollowingPosts = async (req, res) => {
+  const userId = req.user._id
+
+  // get currentUser
+  const user = await User.findById(userId)
+  if (!user) return res.status(404).json({ error: 'User not found' })
+
+  // get currentUser's following list
+  const following = user.following // return an array of user ids
+
+  // get posts of users in the following list
+  // https://mongoosejs.com/docs/queries.html
+  // {"breed" : { $in : ["Pitbull", "Great Dane", "Pug"]}}
+  const feedPosts = await Post.find({ user: { $in: following } })
+    .sort({ createdAt: -1 })
+    .populate({
+      path: 'user',
+      select: '-password',
+    })
+    .populate({
+      path: 'comments.user',
+      select: '-password',
+    })
+
+  res.status(200).json(feedPosts)
+}
+
+export const getLikedPosts = async (req, res) => {
+  const userId = req.params.id
+
+  const user = await User.findById(userId)
+  if (!user) return res.status(404).json({ error: 'User not found' })
+
+  const likedPosts = await Post.find({ _id: { $in: user.likedPosts } })
+    .populate({
+      path: 'user',
+      select: '-password',
+    })
+    .populate({
+      path: 'comments.user',
+      select: '-password',
+    })
+
+  res.status(200).json(likedPosts)
+}
+
+// get posts of a specific user
+export const getUserPosts = async (req, res) => {
+  const { username } = req.params
+
+  // find the user by username
+  const user = await User.findOne({ username })
+  if (!user) return res.status(404).json({ error: 'User not found' })
+
+  // get posts of the user
+  const posts = await Post.find({ user: user._id })
+    .sort({ createdAt: -1 })
+    .populate({
+      path: 'user',
+      select: '-password',
+    })
+    .populate({
+      path: 'comments.user',
+      select: '-password',
+    })
+
+  res.status(200).json(posts)
 }
 
 export const deletePost = async (req, res) => {
@@ -127,83 +215,4 @@ export const likeUnlikePost = async (req, res) => {
     const updatedLikes = post.likes
     res.status(200).json(updatedLikes)
   }
-}
-
-export const getAllPosts = async (req, res) => {
-  const posts = await Post.find()
-    .sort({ createdAt: -1 })
-    .populate({
-      path: 'user',
-      select: '-password',
-    })
-    .populate({
-      path: 'comments.user',
-      select: '-password',
-    })
-
-  if (posts.length === 0) {
-    return res.status(200).json([])
-  }
-
-  res.status(200).json(posts)
-}
-
-export const getLikedPosts = async (req, res) => {
-  const userId = req.params.id
-
-  const user = await User.findById(userId)
-  if (!user) return res.status(404).json({ error: 'User not found' })
-
-  const likedPosts = await Post.find({ _id: { $in: user.likedPosts } })
-    .populate({
-      path: 'user',
-      select: '-password',
-    })
-    .populate({
-      path: 'comments.user',
-      select: '-password',
-    })
-
-  res.status(200).json(likedPosts)
-}
-
-export const getFollowingPosts = async (req, res) => {
-  const userId = req.user._id
-  const user = await User.findById(userId)
-  if (!user) return res.status(404).json({ error: 'User not found' })
-
-  const following = user.following
-
-  const feedPosts = await Post.find({ user: { $in: following } })
-    .sort({ createdAt: -1 })
-    .populate({
-      path: 'user',
-      select: '-password',
-    })
-    .populate({
-      path: 'comments.user',
-      select: '-password',
-    })
-
-  res.status(200).json(feedPosts)
-}
-
-export const getUserPosts = async (req, res) => {
-  const { username } = req.params
-
-  const user = await User.findOne({ username })
-  if (!user) return res.status(404).json({ error: 'User not found' })
-
-  const posts = await Post.find({ user: user._id })
-    .sort({ createdAt: -1 })
-    .populate({
-      path: 'user',
-      select: '-password',
-    })
-    .populate({
-      path: 'comments.user',
-      select: '-password',
-    })
-
-  res.status(200).json(posts)
 }

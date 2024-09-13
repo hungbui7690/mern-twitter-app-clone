@@ -1,9 +1,10 @@
-import { useState } from 'react'
 import Posts from '../components/common/Posts'
 import CreatePost from '../components/common/CreatePost'
+import { usePostStore } from '../zustand/usePostStore'
 
 const HomePage = () => {
-  const [feedType, setFeedType] = useState('forYou')
+  const { feedType, setFeedType } = usePostStore((state) => state)
+  // console.log(feedType)
 
   return (
     <>
