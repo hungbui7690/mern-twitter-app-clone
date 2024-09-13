@@ -12,7 +12,7 @@ import { formatPostDate } from '../../utils/date'
 import { axiosInstance } from '../../utils/axios'
 
 const Post = ({ post }) => {
-  console.log(post)
+  // console.log(post)
   const [comment, setComment] = useState('')
   const { data: authUser } = useQuery({ queryKey: ['authUser'] })
 
@@ -105,7 +105,7 @@ const Post = ({ post }) => {
             {post.img && (
               <img
                 src={post.img}
-                className='border-gray-700 border rounded-lg h-80 object-contain'
+                className='border-gray-700 border rounded-lg h-80 object-cover'
                 alt=''
               />
             )}

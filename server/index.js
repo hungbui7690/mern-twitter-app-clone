@@ -5,6 +5,7 @@ dotenv.config()
 import 'express-async-errors'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
+import fileUpload from 'express-fileupload'
 import { v2 as cloudinary } from 'cloudinary'
 import notFoundMiddleware from './middleware/not-found.js'
 import errorHandlerMiddleware from './middleware/error-handler.js'
@@ -21,6 +22,7 @@ cloudinary.config({
 })
 
 app.use(express.json())
+app.use(fileUpload({ useTempFiles: true }))
 app.use(cookieParser(process.env.JWT_SECRET))
 app.use(cors({ credentials: true, origin: 'http://localhost:3000' }))
 

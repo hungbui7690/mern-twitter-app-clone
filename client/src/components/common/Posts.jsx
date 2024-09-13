@@ -39,7 +39,7 @@ const Posts = ({ username, userId }) => {
     queryFn: async () => {
       try {
         const res = await axiosInstance.get(POST_ENDPOINT)
-        console.log('Posts: ', res)
+        // console.log('Posts: ', res)
         return res.data
       } catch (error) {
         console.error(error.response.data.msg)

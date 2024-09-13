@@ -8,9 +8,11 @@ import {
   UnauthenticatedError,
 } from '../errors/index.js'
 import { StatusCodes } from 'http-status-codes'
+import fs from 'fs'
 
 export const createPost = async (req, res) => {
-  const { text, img } = req.body
+  const { text } = req.body
+  let img = req.files?.img.tempFilePath
   const currentUserID = req.user._id.toString()
 
   // find the current user
@@ -25,6 +27,7 @@ export const createPost = async (req, res) => {
   // if img is present, upload it to cloudinary
   if (img) {
     const uploadedResponse = await cloudinary.uploader.upload(img)
+    fs.unlinkSync(img)
     img = uploadedResponse.secure_url
   }
 
@@ -71,8 +74,9 @@ export const getFollowingPosts = async (req, res) => {
   // get currentUser's following list
   const following = user.following // return an array of user ids
 
-  // get posts of users in the following list
+  // *** get posts of users in the following list
   // https://mongoosejs.com/docs/queries.html
+  // { field: { $in: [<value1>, <value2>, ... <valueN> ] } }
   // {"breed" : { $in : ["Pitbull", "Great Dane", "Pug"]}}
   const feedPosts = await Post.find({ user: { $in: following } })
     .sort({ createdAt: -1 })
