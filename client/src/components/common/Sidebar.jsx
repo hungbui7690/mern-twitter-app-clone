@@ -3,14 +3,38 @@ import { MdHomeFilled } from 'react-icons/md'
 import { IoNotifications } from 'react-icons/io5'
 import { FaUser } from 'react-icons/fa'
 import { BiLogOut } from 'react-icons/bi'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { axiosInstance } from '../../utils/axios'
+import toast from 'react-hot-toast'
+import LoadingSpinner from './LoadingSpinner'
 
 const Sidebar = () => {
-  const data = {
-    fullName: 'John Doe',
-    username: 'johndoe',
-    profileImg: '/avatars/boy1.png',
-  }
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { mutate: logoutMutation, isPending } = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await axiosInstance.post('/auth/logout')
+        console.log('sidebar: ', res)
+        return res.data
+      } catch (error) {
+        console.error(error.response.data.msg)
+        return error
+      }
+    },
+    onSuccess: (data) => {
+      if (data.response) {
+        toast.error(data.response.data.msg)
+        return
+      }
+      toast.success('Logout successful')
+      queryClient.invalidateQueries({ queryKey: ['authUser'] })
+      navigate('/login')
+    },
+  })
+
+  const { data } = useQuery({ queryKey: ['authUser'] })
 
   return (
     <div className='md:flex-[2_2_0] border-gray-700 md:mx-0 pr-0 sm:pr-3 border-r w-18 max-w-52'>
@@ -76,7 +100,17 @@ const Sidebar = () => {
                 </p>
                 <p className='text-slate-500 text-sm'>@{data?.username}</p>
               </div>
-              <BiLogOut className='w-5 h-5 cursor-pointer' />
+              {isPending ? (
+                <LoadingSpinner />
+              ) : (
+                <BiLogOut
+                  className='w-5 h-5 cursor-pointer'
+                  onClick={(e) => {
+                    e.preventDefault()
+                    logoutMutation()
+                  }}
+                />
+              )}
             </div>
           </Link>
         )}

@@ -7,29 +7,27 @@ import { StatusCodes } from 'http-status-codes'
 export const signup = async (req, res) => {
   // extract data from request body
   const { fullName, username, email, password } = req.body
+  console.log(req.body)
 
   // write a regex to check if email is valid or not and throw an error if it is not
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!isEmailValid.test(email)) {
-    throw BadRequestError('Invalid email format')
-  }
+  const isEmailValid =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
+  if (!isEmailValid.test(email))
+    throw new BadRequestError('Invalid email format')
 
   // check if user already exists in the database
   const isUserExist = await User.findOne({ username })
   if (isUserExist) {
-    throw BadRequestError('Username is already taken')
+    throw new BadRequestError('Username is already taken')
   }
 
   // check if email already exists in the database
   const isEmailExist = await User.findOne({ email })
-  if (isEmailExist) {
-    throw BadRequestError('Email is already taken')
-  }
+  if (isEmailExist) throw new BadRequestError('Email is already taken')
 
   // check if password is at least 6 characters long
-  if (password.length < 6) {
-    throw BadRequestError('Password must be at least 6 characters long')
-  }
+  if (password.length < 6)
+    throw new BadRequestError('Password must be at least 6 characters long')
 
   // hash the password
   const salt = await bcrypt.genSalt(10)
@@ -44,7 +42,7 @@ export const signup = async (req, res) => {
   })
 
   // throw an error if user could not be created
-  if (!newUser) throw BadRequestError('Could not create user')
+  if (!newUser) throw new BadRequestError('Could not create user')
 
   // save the user to the database
   generateTokenAndSetCookie(newUser._id, res)
@@ -74,7 +72,7 @@ export const login = async (req, res) => {
 
   // throw an error if user does not exist or password is incorrect
   if (!user || !isPasswordCorrect) {
-    throw BadRequestError('Invalid username or password')
+    throw new BadRequestError('Invalid username or password')
   }
 
   // generate token and set cookie
@@ -95,7 +93,7 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   // clear the cookie
-  res.cookie('jwt', '', { maxAge: 0 })
+  res.cookie('token', '', { maxAge: 0 })
   res.status(StatusCodes.OK).json({ message: 'Logged out successfully' })
 }
 
