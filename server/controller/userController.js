@@ -2,7 +2,11 @@ import bcrypt from 'bcryptjs'
 import { v2 as cloudinary } from 'cloudinary'
 import { StatusCodes } from 'http-status-codes'
 import User from '../model/User.js'
-import { BadRequestError, NotFoundError } from '../errors/index.js'
+import {
+  BadRequestError,
+  NotFoundError,
+  UnauthenticatedError,
+} from '../errors/index.js'
 import Notification from '../model/Notification.js'
 
 export const getUserProfile = async (req, res) => {
@@ -100,17 +104,12 @@ export const getSuggestedUsers = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   // get all fields from request body object
-  const {
-    fullName,
-    email,
-    username,
-    currentPassword,
-    newPassword,
-    bio,
-    link,
-    profileImg,
-    coverImg,
-  } = req.body
+  const { fullName, email, username, currentPassword, newPassword, bio, link } =
+    req.body
+
+  // get profileImg and coverImg from req.files object
+  let profileImg = req.files?.profileImg?.tempFilePath
+  let coverImg = req.files?.coverImg?.tempFilePath
 
   // get currentUser id
   const userId = req.user._id
@@ -119,14 +118,15 @@ export const updateUser = async (req, res) => {
   let user = await User.findById(userId)
   if (!user) throw new NotFoundError('User not found')
 
-  // in case currentPassword exists, check if it matches with the user's password
-  if (currentPassword) {
-    const isMatch = await bcrypt.compare(currentPassword, user.password)
-    if (!isMatch) throw new BadRequestError('Current password is incorrect')
-  }
-
-  // in case newPassword exists, check if it is at least 6 characters long
+  // in case newPassword is present, check if currentPassword exists and compare it with the user's password
   if (newPassword) {
+    if (!currentPassword)
+      throw new UnauthenticatedError('Current password is required')
+    if (currentPassword) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password)
+      if (!isMatch) throw new BadRequestError('Current password is incorrect')
+    }
+    // check if newPassword is at least 6 characters long
     if (newPassword.length < 6) {
       throw new BadRequestError('Password must be at least 6 characters long')
     }
