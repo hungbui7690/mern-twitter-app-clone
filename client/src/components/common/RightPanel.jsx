@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import RightPanelSkeleton from '../skeleton/RightPanelSkeleton'
 import { axiosInstance } from '../../utils/axios'
 import toast from 'react-hot-toast'
+import useFollow from '../../hooks/useFollow'
+import LoadingSpinner from './LoadingSpinner'
 
 const RightPanel = () => {
   const { data: suggestedUsers, isLoading } = useQuery({
@@ -24,6 +26,8 @@ const RightPanel = () => {
       }
     },
   })
+
+  const { follow, isPending } = useFollow()
 
   if (suggestedUsers?.length === 0) return <div className='w-0 md:w-64'></div>
 
@@ -68,9 +72,10 @@ const RightPanel = () => {
                     className='bg-white hover:bg-white hover:opacity-90 rounded-full text-black btn btn-sm'
                     onClick={(e) => {
                       e.preventDefault()
+                      follow(user._id)
                     }}
                   >
-                    Follow
+                    {isPending ? <LoadingSpinner size='sm' /> : 'Follow'}
                   </button>
                 </div>
               </Link>

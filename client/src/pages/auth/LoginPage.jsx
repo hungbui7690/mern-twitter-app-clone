@@ -82,7 +82,7 @@ const LoginPage = () => {
           >
             {isPending ? <LoadingSpinner /> : 'Login'}
           </button>
-          {isError && <p className='text-red-500'>Something went wrong</p>}
+          {isError && <p className='text-rose-500'>Something went wrong</p>}
         </form>
         <div className='flex flex-col gap-2 mt-4 lg:w-2/3'>
           <p className='text-lg text-white'>

@@ -1,14 +1,34 @@
 import { CiImageOn } from 'react-icons/ci'
 import { BsEmojiSmileFill } from 'react-icons/bs'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { IoCloseSharp } from 'react-icons/io5'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { axiosInstance } from '../../utils/axios'
 import toast from 'react-hot-toast'
+import Emoji from '../emoji/Emoji'
 
 const CreatePost = () => {
   const imgRef = useRef(null)
+  const emojiRef = useRef(null)
+  const emojiContainerRef = useRef(null)
   const [imgURL, setImgURL] = useState(null)
+  const [openEmoji, setOpenEmoji] = useState(false)
+  const [text, setText] = useState('')
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (
+        !emojiRef?.current?.contains(e.target) &&
+        !emojiContainerRef?.current?.contains(e.target)
+      )
+        setOpenEmoji(false)
+    }
+    document.addEventListener('mousedown', handler)
+
+    return () => {
+      document.removeEventListener('mousedown', handler)
+    }
+  })
 
   const { data: authUser } = useQuery({ queryKey: ['authUser'] })
   const queryClient = useQueryClient()
@@ -48,6 +68,7 @@ const CreatePost = () => {
     const formData = new FormData(e.target)
     createPost(formData)
     setImgURL(null)
+    setText('')
     e.target.reset()
   }
 
@@ -63,6 +84,8 @@ const CreatePost = () => {
           className='border-gray-800 p-0 border-none w-full text-lg resize-none textarea focus:outline-none'
           placeholder='What is happening?!'
           name='text'
+          value={text}
+          onChange={(e) => setText(e.target.value)}
         />
         {imgURL && (
           <div className='relative mx-auto w-72'>
@@ -78,12 +101,25 @@ const CreatePost = () => {
         )}
 
         <div className='flex justify-between py-2 border-t border-t-gray-700'>
-          <div className='flex items-center gap-1'>
+          <div className='relative flex items-center gap-1'>
             <CiImageOn
               className='w-6 h-6 cursor-pointer fill-primary'
               onClick={() => imgRef.current.click()}
             />
-            <BsEmojiSmileFill className='w-5 h-5 cursor-pointer fill-primary' />
+            <div ref={emojiRef}>
+              <BsEmojiSmileFill
+                className='w-5 h-5 cursor-pointer fill-primary'
+                onClick={() => setOpenEmoji(!openEmoji)}
+              />
+            </div>
+            {openEmoji && (
+              <Emoji
+                emojiContainerRef={emojiContainerRef}
+                setOpenEmoji={setOpenEmoji}
+                setText={setText}
+                text={text}
+              />
+            )}
           </div>
           <input
             type='file'

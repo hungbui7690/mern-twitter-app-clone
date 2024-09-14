@@ -36,7 +36,7 @@ const Sidebar = () => {
   const { data } = useQuery({ queryKey: ['authUser'] })
 
   return (
-    <div className='md:flex-[2_2_0] border-gray-700 md:mx-0 pr-0 sm:pr-3 border-r w-18 max-w-52'>
+    <div className='md:flex-[2_2_0] border-gray-700 md:mx-0 mt-5 pr-0 sm:pr-3 border-r w-18 max-w-52'>
       <div className='top-5 left-0 sticky flex flex-col px-4 w-20 md:w-full h-screen'>
         <Link to='/' className='flex justify-center md:justify-start'>
           <Logo className='hover:bg-stone-900 px-2 rounded-full w-12 h-12 fill-white' />
