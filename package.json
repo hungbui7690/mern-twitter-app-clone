@@ -1,7 +1,7 @@
 {
-  "name": "twitter-app-clone",
+  "name": "mern-twitter-app-clone",
   "version": "1.0.0",
-  "description": "[Avatar Placeholder](https://avatar-placeholder.iran.liara.run/)",
+  "description": "X aka Twitter App Clone Using MERN Stack",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon server/index.js",
