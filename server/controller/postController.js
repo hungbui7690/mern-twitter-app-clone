@@ -186,29 +186,35 @@ export const likeUnlikePost = async (req, res) => {
   const userId = req.user._id
   const { id: postId } = req.params
 
+  // find post
   const post = await Post.findById(postId)
-
   if (!post) {
     return res.status(404).json({ error: 'Post not found' })
   }
+  // find user
+  const user = await User.findById(userId)
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' })
+  }
 
+  // Check if user has already liked the post
   const userLikedPost = post.likes.includes(userId)
 
+  // If user has already liked the post, unlike it
   if (userLikedPost) {
     // Unlike post
-    await Post.updateOne({ _id: postId }, { $pull: { likes: userId } })
-    await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } })
+    post.likes.pull(userId)
+    user.likedPosts.pull(postId)
+    Promise.all([await post.save(), await user.save()])
 
-    const updatedLikes = post.likes.filter(
-      (id) => id.toString() !== userId.toString()
-    )
-    res.status(200).json(updatedLikes)
+    res.status(200).json(post.likes)
   } else {
-    // Like post
+    // If user has not liked the post, like it
     post.likes.push(userId)
-    await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } })
-    await post.save()
+    user.likedPosts.push(postId)
+    Promise.all([await post.save(), await user.save()])
 
+    // update notification
     const notification = new Notification({
       from: userId,
       to: post.user,
