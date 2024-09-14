@@ -15,17 +15,6 @@ const Post = ({ post }) => {
   // console.log(post)
   const [comment, setComment] = useState('')
   const { data: authUser } = useQuery({ queryKey: ['authUser'] })
-
-  // The useQueryClient hook (to not be confused with the useQuery hook or QueryClient) is our entry point to interacting with our query cache. The useQueryClient hook returns the instance of the current QueryClient of our application.
-  // const {
-  //   prefetchQuery,
-  //   fetchQuery,
-  //   getQueryData,
-  //   refetchQueries,
-  //   getQueryState,
-  //   setQueryDefaults,
-  //   clear,
-  // } = useQueryClient();
   const queryClient = useQueryClient()
   const postOwner = post.user
   const isLiked = post.likes.includes(authUser._id)
@@ -35,9 +24,7 @@ const Post = ({ post }) => {
   const { mutate: deletePost, isPending: isDeleting } = useMutation({
     mutationFn: async () => {
       try {
-        const res = await axiosInstance(`/posts/${post._id}`, {
-          method: 'DELETE',
-        })
+        const res = await axiosInstance.delete(`/posts/${post._id}`)
         return res.data
       } catch (error) {
         console.error(error.response.data.msg)
@@ -54,6 +41,37 @@ const Post = ({ post }) => {
     },
   })
 
+  const { mutate: likePost, isPending: isLikePending } = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await axiosInstance.post(`/posts/like/${post._id}`)
+        return res.data
+      } catch (error) {
+        console.error(error.response.data.msg)
+        return error
+      }
+    },
+    onSuccess: (data) => {
+      if (data.response) {
+        toast.error(data.response.data.msg)
+        return
+      }
+      // this is not the best way, since we need to fetch all posts
+      // queryClient.invalidateQueries({ queryKey: ["posts"] });
+
+      // instead, update the cache directly for that post
+      queryClient.setQueryData(['posts'], (oldData) => {
+        console.log('data: ', data)
+        return oldData.map((p) => {
+          if (p._id === post._id) {
+            return { ...p, likes: data }
+          }
+          return p
+        })
+      })
+    },
+  })
+
   const handleDeletePost = () => {
     deletePost()
   }
@@ -62,7 +80,10 @@ const Post = ({ post }) => {
     e.preventDefault()
   }
 
-  const handleLikePost = () => {}
+  const handleLikePost = () => {
+    if (isLikePending) return
+    likePost()
+  }
 
   return (
     <>
@@ -193,7 +214,13 @@ const Post = ({ post }) => {
                 className='flex items-center gap-1 cursor-pointer group'
                 onClick={handleLikePost}
               >
-                <FaRegHeart className='group-hover:text-pink-500 w-4 h-4 text-slate-500 cursor-pointer' />
+                {isLikePending && <LoadingSpinner size='sm' />}
+                {!isLiked && !isLikePending && (
+                  <FaRegHeart className='group-hover:text-pink-500 w-4 h-4 text-slate-500 cursor-pointer' />
+                )}
+                {isLiked && !isLikePending && (
+                  <FaRegHeart className='w-4 h-4 text-pink-500 cursor-pointer' />
+                )}
                 <span
                   className={`text-sm  group-hover:text-pink-500 ${
                     isLiked ? 'text-pink-500' : 'text-slate-500'
