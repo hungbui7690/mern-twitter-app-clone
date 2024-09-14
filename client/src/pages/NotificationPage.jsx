@@ -1,49 +1,63 @@
 import { Link } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'react-hot-toast'
 import LoadingSpinner from '../components/common/LoadingSpinner'
-
-import { IoSettingsOutline } from 'react-icons/io5'
+import { FaTrash } from 'react-icons/fa'
 import { FaUser } from 'react-icons/fa'
 import { FaHeart } from 'react-icons/fa6'
+import { axiosInstance } from '../utils/axios'
 
 const NotificationPage = () => {
-  const isLoading = false
-  const notifications = [
-    {
-      _id: '1',
-      from: {
-        _id: '1',
-        username: 'johndoe',
-        profileImg: '/avatars/boy2.png',
-      },
-      type: 'follow',
+  const queryClient = useQueryClient()
+  const { data: notifications, isLoading } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      try {
+        const res = await axiosInstance.get('/notification')
+        return res.data
+      } catch (error) {
+        throw new Error(error.response.data)
+      }
     },
-    {
-      _id: '2',
-      from: {
-        _id: '2',
-        username: 'janedoe',
-        profileImg: '/avatars/girl1.png',
-      },
-      type: 'like',
+    onSuccess: (data) => {
+      if (data.response) {
+        toast.error(data.response.data.msg)
+        return
+      }
     },
-  ]
+    onError: (error) => {
+      toast.error(error.msg)
+    },
+  })
 
-  const deleteNotifications = () => {
-    alert('All notifications deleted')
-  }
+  const { mutate: deleteNotifications } = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await axiosInstance.delete('/notification')
+        return res.data
+      } catch (error) {
+        console.error(error.response.data.msg)
+        return error
+      }
+    },
+    onSuccess: () => {
+      toast.success('Notifications deleted successfully')
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+    },
+  })
 
   return (
     <>
-      <div className='flex-[4_4_0] border-gray-700 mr-5 border-r border-l min-h-screen'>
+      <div className='flex-[4_4_0] border-gray-700 border-r border-l min-h-screen'>
         <div className='flex justify-between items-center border-gray-700 p-4 border-b'>
           <p className='font-bold'>Notifications</p>
-          <div className='dropdown'>
+          <div className='relative dropdown'>
             <div tabIndex={0} role='button' className='m-1'>
-              <IoSettingsOutline className='w-4' />
+              <FaTrash className='w-4' />
             </div>
             <ul
               tabIndex={0}
-              className='z-[1] bg-base-100 shadow p-2 rounded-box w-52 dropdown-content menu'
+              className='right-0 z-[1] bg-base-100 shadow p-2 rounded-box w-52 dropdown-content menu'
             >
               <li>
                 <a onClick={deleteNotifications}>Delete all notifications</a>
@@ -95,5 +109,4 @@ const NotificationPage = () => {
     </>
   )
 }
-
 export default NotificationPage
