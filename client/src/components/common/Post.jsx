@@ -3,7 +3,6 @@ import { BiRepost } from 'react-icons/bi'
 import { FaRegHeart } from 'react-icons/fa'
 import { FaRegBookmark } from 'react-icons/fa6'
 import { FaTrash } from 'react-icons/fa'
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
@@ -13,7 +12,6 @@ import { axiosInstance } from '../../utils/axios'
 
 const Post = ({ post }) => {
   // console.log(post)
-  const [comment, setComment] = useState('')
   const { data: authUser } = useQuery({ queryKey: ['authUser'] })
   const queryClient = useQueryClient()
   const postOwner = post.user
@@ -72,12 +70,48 @@ const Post = ({ post }) => {
     },
   })
 
+  const { mutate: commentPost, isPending: isCommenting } = useMutation({
+    mutationFn: async (formData) => {
+      try {
+        const res = await axiosInstance.post(
+          `/posts/comment/${post._id}`,
+          formData
+        )
+        return res.data.comments
+      } catch (error) {
+        console.error(error.response.data.msg)
+        return error
+      }
+    },
+    onSuccess: (data) => {
+      if (data.response) {
+        toast.error(data.response.data.msg)
+        return
+      }
+      queryClient.setQueryData(['posts'], (oldData) => {
+        console.log(oldData)
+        return oldData.map((p) => {
+          if (p._id === post._id) {
+            return { ...p, comments: data }
+          }
+          return p
+        })
+      })
+    },
+  })
+
   const handleDeletePost = () => {
     deletePost()
   }
 
   const handlePostComment = (e) => {
     e.preventDefault()
+    if (isCommenting) return
+
+    const formData = new FormData(e.target)
+
+    commentPost(formData)
+    e.target.reset()
   }
 
   const handleLikePost = () => {
@@ -146,7 +180,8 @@ const Post = ({ post }) => {
                   {post.comments.length}
                 </span>
               </div>
-              {/* We're using Modal Component from DaisyUI */}
+
+              {/* Modal Component from DaisyUI */}
               <dialog
                 id={`comments_modal${post._id}`}
                 className='border-none modal outline-none'
@@ -192,11 +227,10 @@ const Post = ({ post }) => {
                     <textarea
                       className='border-gray-800 p-1 border rounded w-full text-md resize-none textarea focus:outline-none'
                       placeholder='Add a comment...'
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
+                      name='text'
                     />
                     <button className='px-4 rounded-full text-white btn btn-primary btn-sm'>
-                      {<LoadingSpinner size='md' />}
+                      {isCommenting ? <LoadingSpinner size='md' /> : 'Post'}
                     </button>
                   </form>
                 </div>
@@ -204,6 +238,7 @@ const Post = ({ post }) => {
                   <button className='outline-none'>close</button>
                 </form>
               </dialog>
+
               <div className='flex items-center gap-1 cursor-pointer group'>
                 <BiRepost className='group-hover:text-green-500 w-6 h-6 text-slate-500' />
                 <span className='group-hover:text-green-500 text-slate-500 text-sm'>
